@@ -119,3 +119,50 @@ Reth `best_transactions_with_attributes(base_fee, blob=None)` → không blob; s
 4. Alchemy auth WS pending (chưa probe có key)
 
 Muốn đào tiếp hướng nào: full-node pending, map miner, hay quét top contract ngoài Uni?
+
+Đo xong latency/geo RPC Arc (evidence-only).
+
+**Vantage đo:** máy mình đang egress AWS **us-east-1 / Ashburn, VA** (`184.193.214.93`). Số ms dưới đây là từ điểm đó — không phải từ VN.
+
+## Kết luận đặt VPS
+**Không có docs công bố city/region của validator** (chỉ nói PoA multi-region). **Không** chọn “colo cạnh validator” chỉ từ public RPC.
+
+| Ứng viên | Độ tin | Áp dụng |
+|---|---|---|
+| **us-east-1 / Ashburn** | Mạnh cho **CDN edge** + PublicNode origin | `cf-ray: *-IAD`; PublicNode `x-pn-region: ash` |
+| **Frankfurt (eu-central-1)** | Mạnh cho **Blockdaemon only** | TeraSwitch geofeed FRA |
+| **Ottawa/Kanata, Ontario** | Mạnh cho **Pinax** | PTR + `x-pinax-node-id: kan-…` |
+
+## Bảng đo (median ms, n=5 HTTPS)
+
+| Endpoint | Infra | Geo | connect / TLS / TTFB |
+|---|---|---|---|
+| `rpc.mainnet.arc.io` | Cloudflare | Edge **IAD** (IP DB Toronto = anycast artifact) | 0.9 / 30 / **68** |
+| `rpc.quicknode.mainnet.arc.io` | **cùng VIP CF với official** | IAD | 1.0 / 23 / **85** |
+| `rpc.drpc.mainnet.arc.io` / `arc.drpc.org` | CF | IAD, origin unknown | TTFB ~90–108 |
+| `arc-rpc.publicnode.com` | CF + PN | Edge IAD, **origin ash** | **76** |
+| `rpc.arc-scan.org` | CF | IAD, origin chậm hơn | **226** |
+| `5042.rpc.thirdweb.com` | CF | IAD | **109** |
+| `rpc.blockdaemon.mainnet.arc.io` | **Dedicated** TeraSwitch | **Frankfurt** | TLS 275 / TTFB **548** (xa từ Ashburn) |
+| `arc.rpc.pinax.network` | Dedicated | **Ontario / Kanata** | TLS 120 / TTFB **248** |
+| `arc.gateway.tenderly.co` | GCP | Gần path us-east-1; city DB **UNCERTAIN** | TTFB **240** |
+
+WSS official/QuickNode cũng OK từ Ashburn (~open 120–140 ms + rpc ~40 ms).
+
+## CDN vs dedicated
+- **CF anycast (hug user, không = validator):** official, QuickNode, dRPC, PublicNode, arc-scan, thirdweb
+- **Dedicated (geo rõ hơn):** Blockdaemon = FRA; Pinax = Ontario
+- Tenderly “Kansas City” trên IP DB — **bác bỏ làm city** (latency/traceroute mâu thuẫn)
+
+## Giới hạn quan trọng
+1. Edge RPC ≠ vị trí proposer/validator / private mempool  
+2. Chỉ 1 vantage (Ashburn)  
+3. Validator cities: **NOT FOUND** trong docs/press  
+
+## Gợi ý thực dụng
+- Nếu bot chủ yếu **submit + theo `newHeads` qua RPC public CF**: VPS **us-east-1** hợp lý để gần edge IAD (đã đo nhanh từ đó).  
+- Nếu ưu tiên **Blockdaemon**: cân nhắc **Frankfurt**.  
+- Nếu Pinax: **ca-central-1** hoặc Ontario.  
+- Muốn chắc: đo lại từ vài VPS ứng viên (us-east-1 / eu-central-1 / ca-central-1) rồi so TTFB `eth_chainId`.
+
+Raw: `/workspace/arc-rpc-latency/` (`measurements.csv`, `measurements.json`). Muốn mình gửi file ra chat hoặc đo thêm từ region khác không?
