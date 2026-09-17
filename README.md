@@ -166,3 +166,136 @@ WSS official/QuickNode cũng OK từ Ashburn (~open 120–140 ms + rpc ~40 ms).
 - Muốn chắc: đo lại từ vài VPS ứng viên (us-east-1 / eu-central-1 / ca-central-1) rồi so TTFB `eth_chainId`.
 
 Raw: `/workspace/arc-rpc-latency/` (`measurements.csv`, `measurements.json`). Muốn mình gửi file ra chat hoặc đo thêm từ region khác không?
+
+
+# Free / Public VPS & Cloud cho đo latency Arc RPC
+
+**Ngày verify:** 2026-09-17 (Asia/Saigon, UTC+7)  
+**Mục đích:** Multi-region ping/TTFB tới Arc RPC (ví dụ `eth_chainId`) — ưu tiên SSH hoặc chạy được `curl`.  
+**Nguồn chính:** trang official + [ripienaar/free-for-dev](https://github.com/ripienaar/free-for-dev)  
+**Quy tắc:** Không bịa provider. Không liệt kê “free VPS Telegram” khi không có link thật.
+
+---
+
+## Cảnh báo quan trọng
+
+- **Telegram / X “free VPS giveaway”:** thường là malware, honeypot, steal SSH key/crypto wallet. **KHÔNG dùng** trừ khi bạn tự audit nguồn uy tín — trong lần search hôm nay **không tìm thấy giveaway community đáng tin** để liệt kê.
+- Free tier **có thể đổi / hết capacity** bất cứ lúc nào; luôn đọc lại trang official trước khi signup.
+- Card hầu hết bắt buộc để verify identity — không có nghĩa là sẽ bị charge nếu ở trong free limits (nhưng dễ charge nếu quên tắt resource).
+
+---
+
+## Bảng ~10 lựa chọn đã verify (2026-09-17)
+
+| # | Name | Type | Official signup URL | What you get | Regions (latency-critical) | Limits / card / expire? | Good for latency? | Caveats / scam risk | Source verified today |
+|---|------|------|---------------------|--------------|----------------------------|-------------------------|-------------------|---------------------|----------------------|
+| 1 | **Oracle Cloud Always Free** | Always Free VM | https://signup.cloud.com/ | 2× `VM.Standard.E2.1.Micro` (1/8 OCPU, 1 GB) **và/hoặc** Ampere A1 Flex tới **2 OCPU + 12 GB** tổng; 200 GB block; 10 TB egress/mo | **Chỉ home region** lúc signup (chọn kỹ). Có Toronto (`ca-toronto-1`), Frankfurt (`eu-frankfurt-1`), Ashburn, v.v. trong OCI commercial regions | Card/debit (credit-like) bắt buộc verify; Always Free **không hết hạn**; idle VM có thể bị reclaim; capacity “out of host” thường gặp | **SSH: YES** — top pick VPS | Capacity khó; A1 limit đã giảm còn 2 OCPU/12 GB (Always Free); idle reclaim | [Always Free docs](https://docs.oracle.com/en-us/iaas/Content/FreeTier/freetier_topic-Always_Free_Resources.htm), [FAQ](https://www.oracle.com/cloud/free/faq/) |
+| 2 | **Google Cloud Always Free e2-micro** | Always Free VM | https://cloud.google.com/free | 1× non-preemptible **`e2-micro`** (~2 shared vCPU, **1 GB RAM**); 30 GB-months disk; 1 GB NA egress/mo | **Chỉ US:** `us-west1`, `us-central1`, `us-east1` | Card khi Free Trial; Always Free **không expire** nếu billing account active; cần Paid billing để giữ sau trial | **SSH: YES** — tốt cho **us-east** | **Không free** ở Europe/Canada/Asia; e2-micro ngoài 3 region = mất tiền | [Free cloud features](https://docs.cloud.google.com/free/docs/free-cloud-features) (updated 2026-09-15) |
+| 3 | **AWS Free Tier EC2** | Trial / credit (không còn always-free EC2 dài hạn kiểu cũ cho account mới) | https://aws.amazon.com/free/ | Account **≥ 2025-07-15:** tới **$200 credit / tối đa 6 tháng** (Free plan); EC2 eligible: `t3.micro/small`, `t4g.micro/small`, … Account cũ: 12 tháng t2/t3.micro | **Multi-region** gồm `us-east-1`, `eu-central-1` (Frankfurt), `ca-central-1` (Canada) — chọn khi launch | Card; Free plan tự đóng sau 6 tháng / hết credit; upgrade Paid nếu muốn tiếp | **SSH: YES** — tốt multi-region **trong thời gian credit** | Model đổi mạnh 2025-07; đọc kỹ Free vs Paid plan; xóa EBS/EIP tránh bill | [AWS Free](https://aws.amazon.com/free/), [EC2 Free Tier usage](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-free-tier-usage.html) |
+| 4 | **Azure Free Account VMs** | Trial 12 tháng (không Always Free VM) | https://azure.microsoft.com/en-us/pricing/purchase-options/azure-account | **750 giờ/tháng × 12 tháng** cho B-series free: **B1s**, **B2pts v2** (ARM), **B2ats v2** (AMD) | Nhiều region (East US, Germany West Central / Frankfurt area, Canada Central…) — phụ thuộc capacity & SKU subscription | Card; **12 tháng** rồi trả phí; disk/IP có thể phát sinh phí; Free Trial đôi khi `NotAvailableForSubscription` với B1s | **SSH: YES** (Linux) | Không phải always-free; SKU/region intermittent | [Free services](https://azure.microsoft.com/en-us/pricing/free-services), [Create free services](https://learn.microsoft.com/en-us/azure/cost-management-billing/manage/create-free-services) |
+| 5 | **Alibaba Cloud ECS Free Trial** | Trial | https://www.alibabacloud.com/ (Free Trial Center / ECS free trial) | Quota **CNY 300** (personal) / **CNY 660** (enterprise) cho ECS+system disk; traffic 20 GB CN + 200 GB overseas/mo | **7 region trial:** Beijing, Hangzhou, Guangzhou, Chengdu, Ulanqab, Heyuan, **Hong Kong** | Identity verify; **3 tháng** validity; vượt quota = pay-as-you-go; **phải tự release** khi hết | **SSH: YES** — tốt Asia/HK | Không cover US-East/Frankfurt/Ontario; dễ quên instance → bill | [ECS free trial guide](https://help.aliyun.com/en/ecs/user-guide/ecs-free-trial) |
+| 6 | **Render Free Web Service** | PaaS | https://render.com/docs/free | Free web service **0.1 CPU / 512 MB**; 750 Free instance-hours/mo | **Oregon, Ohio, Virginia, Frankfurt, Singapore** | Spin down sau **15 phút idle**; spin-up ~1 phút; **không SSH**; card optional (cần nếu vượt bandwidth) | **Curl script: YES** (HTTP service / cron-like wake). **SSH: NO** | Sleep làm lệch TTFB cold-start; không đo được như VPS ổn định trừ khi giữ warm | [Render Free](https://render.com/docs/free), [Regions](https://render.com/docs/regions) |
+| 7 | **Railway Trial + Free plan** | Trial / PaaS | https://railway.com/ | Trial: **$5 / 30 ngày**; sau đó Free plan **$1 credit/tháng** (không roll-over); trial max ~1 GB RAM shared | US West, US East (Virginia), EU (Amsterdam), Singapore (theo docs Railway) | GitHub verify cho Full Trial (outbound); Limited Trial **hạn chế network** — kém cho ping RPC | Curl nếu Full Trial. **SSH: limited/no classic VPS** | $1/mo quá ít cho always-on; Limited Trial = outbound kém | [Railway free trial](https://docs.railway.com/pricing/free-trial) |
+| 8 | **Cloudflare Workers Free** | Edge serverless (**≠ VPS**) | https://developers.cloudflare.com/workers/ | **100k requests/day**; 10 ms CPU/invocation | **Global edge** (hàng trăm PoP) — không chọn “1 VPS region” | Free mặc định; không SSH | **HTTP latency từ edge: YES**. **SSH/VPS: NO** | Đo được RTT edge→RPC, **không** đại diện egress VPS bot colocated | [Workers pricing](https://developers.cloudflare.com/workers/platform/pricing/) |
+| 9 | **GitHub Codespaces** | Codespace / temp | https://github.com/features/codespaces | Free personal: **120 core-hours/mo** + 15 GB-month storage (≈ 60h trên 2-core) | Host trên Azure (region do GitHub chọn; không full control như EC2) | Hết quota thì block nếu không có payment method | **Curl trong terminal: YES**. Không phải persistent VPS | Egress region không ổn định cho so sánh lâu dài; idle timeout | [Codespaces billing](https://docs.github.com/en/billing/concepts/product-billing/github-codespaces) |
+| 10 | **Google Cloud Shell** | Temp shell | https://shell.cloud.google.com/ (qua GCP console) | Linux shell + **5 GB** `$HOME`; free | Auto gán region gần — **không chọn region** | **~50 giờ/tuần**; session idle/non-interactive cut; không dùng mining/scan | **Curl nhanh: YES**. Multi-region control: **NO** | Không thay VPS multi-region; chỉ smoke test | [Cloud Shell quotas](https://cloud.google.com/shell/docs/quotas-limits) |
+
+### Bonus / hạn chế mạnh (không đếm là “solid always-free VPS”)
+
+| Name | Status 2026-09-17 | Note |
+|------|-------------------|------|
+| **Fly.io** | Free tier **ENDED** cho account mới; chỉ **Free Trial: 2 machine-hours hoặc 7 ngày**, auto-stop 5 phút | [fly.io/docs/about/free-trial](https://fly.io/docs/about/free-trial/) — dùng được vài phút multi-region rồi hết |
+| **IBM Cloud Lite** | **KHÔNG** có Always Free VPC/VSI thông thường; có **$200 / 30 ngày** + promo VPC 70% off (Madrid/Osaka/São Paulo tới 2026-12-31) | [ibm.com/products/cloud/free](https://www.ibm.com/products/cloud/free) — **NOT FOUND** free persistent VM kiểu Oracle/GCP |
+| **Huawei Cloud free packages** | Campaign/free packages theo account — trang intl trả về ít nội dung tĩnh; **phải tự check** Billing → Free Packages sau signup | [activity.huaweicloud.com/.../free_packages](https://activity.huaweicloud.com/intl/en-us/free_packages/index.html) — không khẳng định ECS free cố định |
+| **Community TG/X free VPS** | **NOT FOUND** link uy tín trong lần search này | **Scam risk cực cao** |
+
+---
+
+## Ranked top picks cho Arc multi-region (us-east-1, Frankfurt, Ontario)
+
+Giả sử bạn cần so latency tới RPC gần **US East / Frankfurt / Canada (Ontario)**:
+
+| Rank | Pick | Region fit | Vì sao |
+|------|------|------------|--------|
+| **1** | **Oracle Always Free** | Chọn home = **Toronto** *hoặc* **Frankfurt** *hoặc* Ashburn lúc signup | SSH thật, lâu dài, RAM A1 tốt; **1 account = 1 home region** → cần nhiều account/org hợp lệ nếu muốn 3 region (Oracle cấm multi free abuse) |
+| **2** | **AWS Free credits (6 tháng)** | Launch `t3/t4g.micro` ở `us-east-1`, `eu-central-1`, `ca-central-1` | Best multi-region **trong cửa sổ credit**; đo xong **terminate** |
+| **3** | **GCP e2-micro** | `us-east1` (South Carolina) | Solid cho **US East only**; không cover FRA/Ontario free |
+| **4** | **Azure 12-mo B-series** | East US / Germany West Central / Canada Central | SSH multi-region trong 12 tháng; theo dõi disk/IP |
+| **5** | **Render Free** | Virginia + Frankfurt (+ Oregon/Ohio/SG) | Nhanh standup HTTP probe; cold-start làm nhiễu số liệu |
+| **6** | **Alibaba trial (HK)** | Hong Kong / CN | Bổ sung **Asia**; không thay US/EU/CA |
+| **7** | **Workers / Codespaces / Cloud Shell** | Edge / Azure / nearest GCP | Chỉ phụ / smoke — không thay VPS bot |
+
+### Honest shortfall
+
+Không có “10 Always Free VPS multi-region bền” từ reputable cloud năm 2026.  
+Thực tế solid SSH free/trial: **Oracle + GCP (US) + AWS credit window + Azure 12mo (+ Alibaba Asia)**. PaaS/edge thêm 3–4 slot đo phụ. **Thiếu ~3–5 “true multi-region free VMs”** so với mục tiêu 10 VPS thuần.
+
+### Alternative trả phí rẻ (khuyến nghị khi cần số liệu sạch)
+
+- **Hetzner Cloud** (EU: Falkenstein/Nuremberg/Helsinki) — VM nhỏ ~€5/tháng; thêm location US nếu cần (plans khác).  
+- Spot/hourly **Vultr / DigitalOcean / Linode** ~$4–6/tháng × 3 region (NYC/NJ ≈ us-east, Frankfurt, Toronto nếu có) → chạy script 1 ngày rồi destroy.  
+Chi phí một lần đo multi-region thường **<$20**.
+
+---
+
+## Phương pháp đo thực tế (cùng script `eth_chainId`)
+
+Chạy **cùng một script** từ mỗi VPS/PaaS tới **cùng danh sách Arc RPC URL**.
+
+```bash
+#!/usr/bin/env bash
+# arc-latency.sh — đo TTFB + total time eth_chainId
+set -euo pipefail
+RPC_URLS=(
+  "https://YOUR-ARC-RPC-1"
+  "https://YOUR-ARC-RPC-2"
+)
+REGION_LABEL="${REGION_LABEL:-unknown}"
+N="${N:-20}"
+OUT="arc-latency-${REGION_LABEL}-$(date -u +%Y%m%dT%H%M%SZ).csv"
+echo "ts_utc,region,rpc,http_code,time_namelookup,time_connect,time_appconnect,time_starttransfer,time_total" > "$OUT"
+
+for rpc in "${RPC_URLS[@]}"; do
+  for i in $(seq 1 "$N"); do
+    ts=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+    # shellcheck disable=SC2016
+    line=$(curl -sS -o /tmp/arc_body.json -w '%{http_code},%{time_namelookup},%{time_connect},%{time_appconnect},%{time_starttransfer},%{time_total}' \
+      -H 'content-type: application/json' \
+      --data '{"jsonrpc":"2.0","id":1,"method":"eth_chainId","params":[]}' \
+      --max-time 10 \
+      "$rpc" || echo "000,0,0,0,0,0")
+    echo "$ts,$REGION_LABEL,$rpc,$line" >> "$OUT"
+    sleep 0.2
+  done
+done
+echo "Wrote $OUT"
+```
+
+**Cách dùng:**
+
+1. Trên mỗi VPS: `export REGION_LABEL=us-east-1` (hoặc `eu-frankfurt-1`, `ca-toronto-1`).  
+2. Chạy cùng `N` (ví dụ 20–50), cùng giờ UTC nếu có thể.  
+3. So cột **`time_starttransfer` (TTFB)** và **`time_total`**; bỏ mẫu `http_code != 200`.  
+4. Trên Render/Workers: bọc script trong HTTP handler hoặc cron; ghi nhớ **cold start**.  
+5. Ghi lại IP egress / ASN nếu cần phân biệt CDN vs origin RPC.
+
+---
+
+## Nguồn list cộng đồng (không phải VPS)
+
+- https://github.com/ripienaar/free-for-dev — section Major Cloud Providers (Oracle/GCP/AWS/Azure/IBM/CF)  
+- Official docs đã link trong bảng (verify 2026-09-17)
+
+---
+
+## Checklist nhanh cho user (VI)
+
+1. Signup **Oracle** → chọn home region gần RPC candidate (Toronto / Frankfurt / Ashburn).  
+2. Signup **GCP** → e2-micro `us-east1` cho US East.  
+3. Signup **AWS** Free plan → trong 6 tháng credit launch 3 micro ở us-east-1 / eu-central-1 / ca-central-1 → đo → **terminate**.  
+4. (Optional) Azure B-series 12 tháng nếu cần thêm điểm.  
+5. Bổ sung Asia: Alibaba HK trial.  
+6. Smoke: Cloud Shell / Codespaces / Workers.  
+7. **Tránh** random free VPS Telegram/X.  
+8. Nếu cần số liệu production: Hetzner + 1–2 VPS US/CA trả phí 1 ngày.
+
