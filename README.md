@@ -54,3 +54,68 @@ Báo cáo Arc block building / tx ordering — chỉ fact + nguồn. Không đo�
 Nguồn chính đã đọc: docs.arc.io, Circle press/blog AMP, `circlefin/arc-node`, malachite-mempool (README: chưa production-ready), probe RPC read-only.
 
 Muốn mình đào sâu phần nào tiếp: map validator/`miner`, sample tip-ordering trên N block, hay so sánh cụ thể với code `payload.rs`?
+
+Intel tiếp theo cho bot backrun/arb trên Arc `5042` — probe 17/09 ICT, RPC `https://rpc.mainnet.arc.io`.
+
+## Điểm quan trọng nhất
+1. **Không có pending public** trên RPC đã probe: `txpool_*` / pending filter không hỗ trợ; WS `newPendingTransactions` fail hoặc bị chặn. **Backrun từ mempool public ≈ không làm được** trừ khi chạy node / feed riêng. **OBSERVATION**
+2. **Tip bias, không phải tip-lock:** ~28–33% block tip-desc nghiêm; ~96% cặp kề tip không tăng. Tip=0 thường nằm **cuối** block. **OBSERVATION** ≠ policy.
+3. **Uniswap v2/v3/v4 + Universal Router + UniswapX live** (bytecode OK). V2 `allPairsLength = 480`. **WETH: NOT FOUND.**
+4. Block ~**0.52s**; 1 conf = final; timestamp hay trùng → order bằng `blockNumber` + `logIndex`.
+
+## Tip vs vị trí (100 + 80 block)
+| Metric | Kết quả |
+|---|---|
+| Empty | 0% |
+| Avg txs/block | ~32 |
+| Strict tip-desc | 28–33% |
+| Adjacent tip ≥ next | ~96% |
+| First tx = max tip | ~73% |
+| baseFee | luôn 20 Gwei |
+
+Có counterexample tip cao nằm sau tip thấp — đừng tin tip = slot chắc chắn.
+
+## Miner (100 block) — 17 địa chỉ, gần round-robin
+Ví dụ (mỗi cái ~5–6/100): `0xb1a1…9a1b`, `0xefd7…a4fd`, `0x7f07…db05`, … (đủ 17). **Map tên org (Visa/BlackRock…): NOT FOUND** — press chỉ có tên cohort, không gắn address.
+
+## Địa chỉ hệ thống (CONFIRMED docs + bytecode)
+- USDC: `0x3600000000000000000000000000000000000000`
+- EURC: `0xbEf5f6d51CB62b58e6A8f77868681825C6fe21c1`
+- CCTP domain 26 TokenMessengerV2: `0x28b5a0e9C621a5BadaA536219b3a228C8168cf5d`
+- MessageTransmitterV2: `0x81D40F21F12A8F0E3252Bccb954D722d4c464B64`
+- GatewayWallet / Minter: `0x77777777…00eE` / `0x2222222d…C205`
+- Multicall3 / Permit2 / CREATE2: canonical
+
+## DEX (CONFIRMED)
+| | Address |
+|---|---|
+| Uni v2 Factory | `0x89e5db8b5aa49aa85ac63f691524311aeb649eba` |
+| Uni v2 Router | `0x1f7d7550b1b028f7571e69a784071f0205fd2efa` |
+| Uni v3 Factory | `0xf0db7b58379503491d857db50ac9ece64c653918` |
+| SwapRouter02 | `0x53bf6b0684ec7ef91e1387da3d1a1769bc5a6f77` |
+| Uni v4 PoolManager | `0x8366a39c…0951` |
+| Universal Router | `0x4fca4a51ab4f23a7447b3284fbd7d73289a89fb1` |
+| UniswapX Reactor | `0x0000000015134054eA82AE0bb9fda66b36402C36` |
+
+Curve / Aero / fomo factory: **NOT FOUND** (press có tên, chưa có address chính thức).
+
+## RPC matrix (thực dụng)
+- **OK:** `eth_call`, `eth_getLogs`, `eth_getBlockReceipts`, `eth_feeHistory`, WS `newHeads`
+- **Không:** `txpool_*`, pending filters, hầu hết `debug_*` / `trace_*` / `eth_simulateV1`
+- Path public ≈ **newHeads → receipts/logs → simulate sau khi đã vào block**
+
+## Code chọn tx (`payload.rs`) — CONFIRMED
+Reth `best_transactions_with_attributes(base_fee, blob=None)` → không blob; seal sớm theo **deadline**; có blocklist/denylist; proposer ăn `effective_gas_price * gas_used` (base không burn).
+
+## Fee / replace — CONFIRMED docs
+- `maxFeePerGas` ≥ 20 Gwei hoặc silent drop
+- Tip 0 OK; docs gợi ý ~1 Gwei khi tắc
+- Nonce gap có thể treo; cancel = same-nonce resubmit (không thấy RBF % riêng của Arc)
+
+## Next probes đáng giá
+1. Chạy **arc-node** riêng để thấy pending thật
+2. Map 17 miner → validator ID từ genesis/config
+3. Top `to` ngoài Uniswap (có địa chỉ nóng chưa identify)
+4. Alchemy auth WS pending (chưa probe có key)
+
+Muốn đào tiếp hướng nào: full-node pending, map miner, hay quét top contract ngoài Uni?
